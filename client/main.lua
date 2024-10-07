@@ -49,7 +49,7 @@ BodyParts = {
 
 -- Functions
 
--- Gets a bed at the given hospital that is not taken. 
+-- Gets a bed at the given hospital that is not taken.
 -- If all beds are taken it will just place them in the first bed
 local function getClosestAvailableBed(hospitalIndex)
     local hospital = Config.Locations['hospital'][hospitalIndex]
@@ -931,30 +931,44 @@ if Config.UseTarget then
     end)
 else
     CreateThread(function()
-        local checkingPoly = {}
+        -- Better check in with marker
         for k, v in pairs(Config.Locations['checking']) do
-            checkingPoly[#checkingPoly + 1] = BoxZone:Create(vector3(v.x, v.y, v.z), 3.5, 2, {
-                heading = -72,
-                name = 'checkin' .. k,
-                debugPoly = false,
-                minZ = v.z - 2,
-                maxZ = v.z + 2,
+            local point = lib.points.new({
+                coords = v,
+                distance = 13,
             })
-            local checkingCombo = ComboZone:Create(checkingPoly, { name = 'checkingCombo', debugPoly = false })
-            checkingCombo:onPlayerInOut(function(isPointInside)
-                if isPointInside then
-                    if doctorCount >= Config.MinimalDoctors then
-                        exports['qb-core']:DrawText(Lang:t('text.call_doc'), 'left')
-                        CheckInControls('checkin')
-                    else
-                        exports['qb-core']:DrawText(Lang:t('text.check_in'), 'left')
+            local marker = lib.marker.new({
+                type = 1,
+                coords = v,
+                color = { r = 88, g = 255, b = 86, a = 100},
+            })
+
+            function point:nearby()
+                marker:draw()
+
+                if self.currentDistance < 1.5 then
+                    if not lib.isTextUIOpen() then
+                        if doctorCount >= Config.MinimalDoctors then
+                            lib.showTextUI(Lang:t('text.call_doc'), { position = 'left-center' })
+                        else
+                            lib.showTextUI(Lang:t('text.check_in') .. ' for $' .. Config.BillCost, { position = 'left-center' })
+                        end
                         CheckInControls('checkin')
                     end
                 else
                     listen = false
-                    exports['qb-core']:HideText()
+                    if lib.isTextUIOpen() then
+                        lib.hideTextUI()
+                    end
                 end
-            end)
+            end
+
+            function point:onExit()
+                listen = false
+                if lib.isTextUIOpen() then
+                    lib.hideTextUI()
+                end
+            end
         end
         local bedPoly = {}
         for hospitalKey, _ in pairs(Config.Locations['hospital']) do

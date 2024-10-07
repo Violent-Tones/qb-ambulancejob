@@ -191,10 +191,13 @@ CreateThread(function()
                     else
                         DrawTxt(0.90, 1.40, 1.0, 1.0, 0.6, Lang:t('info.help_requested'), 255, 255, 255, 255)
                     end
-
+                    DrawTxt(0.88, 1.37, 1.0, 1.0, 0.6, "PRESS [~r~E~s~] TO REQUEST DR. ROBOT FOR ~r~$" .. exports.hh_aidoc.revive_price() .. "~s~", 255, 255, 255, 255)
                     if IsControlJustPressed(0, 47) and not emsNotified then
                         TriggerServerEvent('hospital:server:ambulanceAlert', Lang:t('info.civ_down'))
                         emsNotified = true
+                    end
+                    if IsControlJustPressed(0, 46) then
+                        TriggerEvent('hhfw:RequestHelp')
                     end
                 end
 
